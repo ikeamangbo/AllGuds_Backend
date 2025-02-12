@@ -1,0 +1,203 @@
+/* Container styling */
+.seller-products {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.seller-products h2 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Grid layout for products */
+.seller-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 1rem;
+}
+
+/* Individual product card styling */
+.seller-product-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.seller-product-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Image styling */
+.seller-product-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Product content styling */
+.seller-product-details {
+  padding: 1.5rem;
+}
+
+.seller-product-details h3 {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.seller-product-details p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+/* Price and stock styling */
+.seller-product-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.seller-price {
+  color: #2ecc71;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.seller-stock {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.seller-product-status {
+  margin-bottom: 1rem;
+}
+
+.seller-status {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.seller-status.active {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.seller-status.inactive {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* Action buttons container */
+.seller-product-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Button styling */
+.seller-edit-btn,
+.seller-delete-btn {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.seller-edit-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.seller-edit-btn:hover {
+  background-color: #2980b9;
+}
+
+.seller-delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.seller-delete-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Add icon styling */
+.seller-product-actions svg {
+  font-size: 1.1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .seller-product-card {
+    flex-direction: column;
+  }
+
+  .seller-products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+/* Loading and empty states */
+.seller-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #7f8c8d;
+  font-size: 1.2rem;
+}
+
+.seller-no-products {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.seller-no-products p {
+  margin-bottom: 1.5rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.seller-add-product-btn {
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.seller-add-product-btn:hover {
+  background-color: #2980b9;
+}
