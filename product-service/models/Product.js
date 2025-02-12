@@ -1,36 +1,63 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  imageUrl: { type: String, required: true },
-  sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  stockQuantity: { type: Number, required: true },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  desc: {
+    type: String,
+    required: true
+  },
   type: {
     type: String,
+    required: true,
     enum: [
-      "Electronics",
-      "Home and Kitchen",
-      "Books and Stationery",
-      "Fashion",
-      "Sports and Outdoors",
-      "Toys and Games",
-      "Beauty and Cosmetics",
-      "Automotive",
-      "Health and Personal Care",
-      "Jewelry and Accessories",
-      "Groceries and Food",
-      "Tools and Hardware",
-      "Office Supplies",
-      "Musical Instruments",
-      "Furniture",
-      "Art and Craft",
-      "Video Games and Consoles",
-      "Music",
-    ],
+      'Electronics',
+      'Fashion',
+      'Home Appliances',
+      'Furniture',
+      'Home Decor',
+      'Smart Home',
+      'Personal Care',
+      'Fitness',
+      'Wearables',
+      'Kitchenware',
+      'Books',
+      'Sports',
+      'Beauty',
+      'Toys & Games',
+      'Outdoor'
+    ]
   },
-  wishlist: { type: Boolean, default: false }, // New wishlist field
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  img: {
+    type: String,
+    required: true
+  },
+  stock: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
+  },
+  available: {
+    type: Boolean,
+    default: true
+  },
+  wishlist: {
+    type: Boolean,
+    default: false
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

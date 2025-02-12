@@ -7,20 +7,49 @@ const { sendEmail } = require('../utils/emailSender');
 exports.register = async (req, res) => {
   try {
     const { email, password, role } = req.body;
+    
+    // Convert role to lowercase to match schema
+    const normalizedRole = role.toLowerCase();
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
-    const user = new User({ email, password, role });
+
+    const user = new User({ 
+      email, 
+      password, 
+      role: normalizedRole 
+    });
     await user.save();
+
+    // Generate token for immediate login after registration
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
     // Send welcome email
     const subject = 'Welcome to Our Platform';
     const body = `<p>Hi,</p><p>Thank you for signing up!</p>`;
     await sendEmail(email, subject, body);
 
-    res.status(201).json({ message: 'User created successfully' });
+    // Return structure matching frontend expectations
+    res.status(201).json({
+      success: true,
+      data: {
+        email: user.email,
+        role: user.role,
+        token
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error registering user' });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error registering user' 
+    });
   }
 };
 
@@ -39,10 +68,21 @@ exports.login = async (req, res) => {
       { expiresIn: '1h' } // Short-lived token
     );
 
-    res.json({ token });
+    // Return user data along with token
+    res.json({
+      success: true,
+      data: {
+        email: user.email,
+        role: user.role,
+        token
+      }
+    });
   } catch (error) {
     console.error('Error logging in:', error);
-    res.status(500).json({ message: 'Error logging in' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error logging in' 
+    });
   }
 };
 

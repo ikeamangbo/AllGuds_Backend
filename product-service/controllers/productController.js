@@ -3,82 +3,194 @@ const Cart = require('../models/Cart'); // Assuming you have a Cart model
 const upload = require('../utils/upload');
 const s3 = require('../utils/aws-config');
 
+const FormatData = (data) => {
+  return { data };
+};
+
 exports.createProduct = async (req, res) => {
   try {
-    const { title, description, price, imageUrl, stockQuantity } = req.body;
-    let uploadedImageUrl = imageUrl;
+    console.log('Received product data:', req.body);
+    console.log('Field validation:', {
+      hasName: !!req.body.name,
+      hasDesc: !!req.body.desc,
+      hasType: !!req.body.type,
+      hasPrice: !!req.body.price,
+      hasStock: !!req.body.stock,
+      hasImg: !!req.body.img
+    });
 
-    if (req.files && req.files.imageUrl) {
-      const image = req.files.imageUrl;
-      const params = {
-        Bucket: 'eneye-images',
-        Key: `products/${Date.now()}-${image.name}`,
-        Body: image.data,
-        ContentType: image.mimetype,
-        ACL: 'public-read',
-      };
-      const uploadResult = await s3.upload(params).promise();
-      uploadedImageUrl = uploadResult.Location;
+    const { name, desc, type, price, stock, img } = req.body;
+    // Get seller from auth middleware
+    const seller = req.user?.id || req.user?.userId;
+
+    if (!seller) {
+      return res.status(401).json({ 
+        message: 'Unauthorized - Seller ID not found',
+        error: 'No seller ID in request'
+      });
     }
 
-    if (!uploadedImageUrl) {
-      return res.status(400).json({ message: 'Image URL is required' });
+    // Validate required fields
+    const missingFields = {
+      name: !name,
+      desc: !desc,
+      type: !type,
+      price: !price,
+      stock: !stock,
+      img: !img,
+      seller: !seller
+    };
+
+    const hasMissingFields = Object.values(missingFields).some(missing => missing);
+
+    if (hasMissingFields) {
+      console.log('Missing fields:', missingFields);
+      return res.status(400).json({ 
+        message: 'All fields are required',
+        missing: missingFields
+      });
     }
 
     const product = new Product({
-      title,
-      description,
-      price,
-      imageUrl: uploadedImageUrl,
-      stockQuantity,
-      sellerId: req.user.userId,
+      name: name.trim(),
+      desc: desc.trim(),
+      type,
+      price: parseFloat(price),
+      stock: parseInt(stock),
+      img,
+      seller,
+      available: parseInt(stock) > 0
     });
 
-    await product.save();
-    res.status(201).json(product);
+    console.log('Creating product with data:', {
+      ...product.toObject(),
+      hasName: !!product.name,
+      hasDesc: !!product.desc,
+      hasType: !!product.type,
+      hasPrice: !!product.price,
+      hasStock: !!product.stock,
+      hasImg: !!product.img,
+      hasSeller: !!product.seller
+    });
+
+    const savedProduct = await product.save();
+    
+    const formattedProduct = {
+      _id: savedProduct._id.toString(),
+      name: savedProduct.name,
+      desc: savedProduct.desc,
+      type: savedProduct.type,
+      price: parseFloat(savedProduct.price),
+      stock: parseInt(savedProduct.stock),
+      img: savedProduct.img,
+      seller: savedProduct.seller.toString(),
+      available: savedProduct.stock > 0
+    };
+
+    res.status(201).json({ data: formattedProduct });
   } catch (error) {
-    console.error('Error creating product:', error);
-    res.status(500).json({ message: 'Error creating product', error });
+    console.error('Error in createProduct:', error);
+    res.status(500).json({ 
+      message: 'Error creating product',
+      error: error.message,
+      details: error.errors // Include validation errors if any
+    });
   }
 };
 
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
-    res.json(products);
+    const products = await Product.find()
+      .select('-__v')
+      .lean()
+      .exec();
+
+    const formattedProducts = products.map(product => ({
+      _id: product._id.toString(),
+      name: product.name || '',
+      desc: product.desc || '',
+      type: product.type || '',
+      price: parseFloat(product.price) || 0,
+      img: product.img || '',
+      stock: parseInt(product.stock) || 0,
+      seller: product.seller?.toString() || '',
+      available: (product.stock || 0) > 0
+    }));
+
+    res.status(200).json(FormatData(formattedProducts));
   } catch (error) {
+    console.error('Error in getProducts:', error);
     res.status(500).json({ message: 'Error fetching products' });
   }
 };
 
 exports.getProductById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const product = await Product.findById(id);
+    const product = await Product.findById(req.params.id)
+      .select('-__v')
+      .lean()
+      .exec();
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    res.json(product);
+
+    const formattedProduct = {
+      _id: product._id.toString(),
+      name: product.name,
+      desc: product.desc,
+      type: product.type,
+      price: parseFloat(product.price),
+      img: product.img,
+      stock: parseInt(product.stock),
+      seller: product.seller.toString(),
+      available: product.stock > 0
+    };
+
+    res.status(200).json(FormatData(formattedProduct));
   } catch (error) {
-    console.error('Error fetching product:', error);
-    res.status(500).json({ message: 'Error fetching product', error });
+    console.error('Error in getProductById:', error);
+    res.status(500).json({ message: 'Error fetching product' });
   }
 };
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { title, description, price, imageUrl, stockQuantity } = req.body;
-    const product = await Product.findOneAndUpdate(
-      { _id: id, sellerId: req.user.userId },
-      { title, description, price, imageUrl, stockQuantity },
+    const { name, desc, type, price, img, stock } = req.body;
+    
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        desc,
+        type,
+        price: parseFloat(price),
+        img,
+        stock: parseInt(stock),
+        available: parseInt(stock) > 0
+      },
       { new: true }
-    );
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found or unauthorized' });
+    ).lean();
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-    res.json(product);
+
+    const formattedProduct = {
+      _id: updatedProduct._id.toString(),
+      name: updatedProduct.name,
+      desc: updatedProduct.desc,
+      type: updatedProduct.type,
+      price: parseFloat(updatedProduct.price),
+      img: updatedProduct.img,
+      stock: parseInt(updatedProduct.stock),
+      seller: updatedProduct.seller.toString(),
+      available: updatedProduct.stock > 0
+    };
+
+    res.status(200).json(FormatData(formattedProduct));
   } catch (error) {
+    console.error('Error in updateProduct:', error);
     res.status(500).json({ message: 'Error updating product' });
   }
 };
